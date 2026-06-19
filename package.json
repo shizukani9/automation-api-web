@@ -27,11 +27,9 @@
     "url": "https://github.com/prestamipe-reclutamiento/qa-tatiana-mayorga/issues"
   },
   "homepage": "https://github.com/prestamipe-reclutamiento/qa-tatiana-mayorga#readme",
-  "dependencies": {
-    "@playwright/test": "^1.61.0"
-  },
   "devDependencies": {
-    "@types/node": "^25.9.3",
+    "@playwright/test": "^1.61.0",
+    "@types/node": "^25.9.4",
     "@typescript-eslint/eslint-plugin": "^8.61.1",
     "@typescript-eslint/parser": "^8.61.1",
     "eslint": "^10.5.0",

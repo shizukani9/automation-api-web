@@ -1,6 +1,5 @@
 # Dependencias
 node_modules/
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
@@ -189,7 +188,6 @@ local/
 *.tfstate.*
 .terraform.lock.hclnode_modules/
 node_modules
-package-lock.json
 playwright-report/
 test-results/
 *.log
