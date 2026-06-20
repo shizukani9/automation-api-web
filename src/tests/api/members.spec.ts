@@ -14,6 +14,10 @@ import { TestDataGenerator } from '../../fixtures/testData';
 import { WaitForApi } from '../../interactions/api/WaitForApi';
 import { GetAllMembers } from '../../tasks/api/GetAllMembers';
 import { DeleteMember } from '../../tasks/api/DeleteMember';
+import { FileGenerator } from '../../fixtures/fileGenerator';
+import { UploadFile } from '../../tasks/api/UploadFile';
+import path from 'path';
+import { DownloadFile } from '../../tasks/api/DownloadFile';
 
 // 🔄 Configurar retries para TODO el describe
 test.describe.configure({ 
@@ -522,4 +526,88 @@ test.describe('TC-API: Members API', () => {
       console.log('✅ TC-API-007 completado: Ciclo de vida DELETE verificado');
     }
   );
+
+  // ============================================================
+  // TC-API-008: POST /api/upload - Subir imagen
+  // ============================================================
+  test('TC-API-008: Upload image file - @files @smoke @positive @EP', async () => {
+    console.log('⏳ [Espera 1/2] Esperando 20s...');
+    await WaitForApi.seconds(20).performAs(actor);
+
+    const filePath = path.join(__dirname, '../../fixtures/files/test_image.jpg');
+    FileGenerator.ensureTestImage(filePath);
+
+    console.log('📤 [Petición 1] Subiendo archivo...');
+    const uploadResponse = await actor.attemptsTo(
+      UploadFile.fromPath(filePath, 'test_image')
+    );
+
+    const statusCode = uploadResponse.status();
+    console.log(`📊 Status: ${statusCode}`);
+
+    await ValidateResponse.of(uploadResponse)
+      .withStatusCode(201)
+      .performAs(actor);
+
+    const body = await ResponseBody.of(uploadResponse).answeredBy(actor);
+    console.log(`📋 Respuesta: ${JSON.stringify(body)}`);
+    
+    expect(body.success).toBe(true);
+    expect(body.message).toContain('successfully');
+    expect(body.url).toBeDefined();
+    expect(body.url).toMatch(/^http:\/\/localhost:5002\/fileuploads\/.+/);
+
+    const filename = body.url.split('/').pop();
+    actor.remember('uploadedFilename', filename);
+    
+    console.log(`✅ Archivo subido: ${filename}`);
+  });
+
+  // ============================================================
+  // TC-API-009: GET /api/download - Descargar imagen
+  // ============================================================
+  test('TC-API-009: Download uploaded image - @files @smoke @positive @EP', async () => {
+    console.log('⏳ [Espera 1/3] Esperando 20s...');
+    await WaitForApi.seconds(20).performAs(actor);
+
+    const filePath = path.join(__dirname, '../../fixtures/files/test_image.jpg');
+    FileGenerator.ensureTestImage(filePath);
+    
+    const fs = require('fs');
+    const originalBuffer = fs.readFileSync(filePath);
+
+    console.log('📤 [Petición 1] Subiendo archivo...');
+    const uploadResponse = await actor.attemptsTo(
+      UploadFile.fromPath(filePath, 'test_download')
+    );
+    
+    const uploadBody = await ResponseBody.of(uploadResponse).answeredBy(actor);
+    const filename = uploadBody.url.split('/').pop();
+    console.log(`✅ Archivo subido: ${filename}`);
+
+    console.log('⏳ [Espera 2/3] Esperando 20s...');
+    await WaitForApi.seconds(20).performAs(actor);
+
+    console.log(`📥 [Petición 2] Descargando archivo: ${filename}`);
+    const downloadResponse = await actor.attemptsTo(
+      DownloadFile.withName(filename!)
+    );
+
+    const statusCode = downloadResponse.status();
+    console.log(`📊 Status: ${statusCode}`);
+
+    await ValidateResponse.of(downloadResponse)
+      .withStatusCode(200)
+      .performAs(actor);
+
+    const headers = downloadResponse.headers();
+    expect(headers['content-disposition']).toContain('attachment');
+    expect(headers['content-type']).toMatch(/image\/(jpeg|jpg|png|gif)/);
+
+    const downloadedBuffer = actor.recall<Buffer>('downloadedFileBuffer');
+    expect(downloadedBuffer).toBeDefined();
+    expect(downloadedBuffer!.length).toBe(originalBuffer.length);
+    
+    console.log(`✅ Archivo descargado correctamente`);
+  });
 });
