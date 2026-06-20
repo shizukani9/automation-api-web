@@ -4,8 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './src/tests',
   
-  // ⏱️ TIMEOUT GLOBAL
-  timeout: 120000, // 2 minutos
+  timeout: 900000, 
   
   fullyParallel: false,
   
@@ -27,8 +26,10 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    actionTimeout: 15000,
-    navigationTimeout: 60000,
+    
+    // ⏱️ Timeouts de acciones
+    actionTimeout: 60000, 
+    navigationTimeout: 120000, 
   },
   
   projects: [
