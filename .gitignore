@@ -27,6 +27,7 @@ playwright/.cache/
 *.jpg
 *screenshot*
 *video*
+*.txt
 
 # Environment variables
 .env
