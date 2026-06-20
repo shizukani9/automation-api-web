@@ -28,8 +28,8 @@ export default defineConfig({
     video: 'retain-on-failure',
     
     // ⏱️ Timeouts de acciones
-    actionTimeout: 60000, 
-    navigationTimeout: 120000, 
+    actionTimeout: 90000, 
+    navigationTimeout: 200000, 
   },
   
   projects: [

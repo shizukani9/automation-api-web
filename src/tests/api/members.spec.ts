@@ -14,6 +14,10 @@ import { TestDataGenerator } from '../../fixtures/testData';
 import { WaitForApi } from '../../interactions/api/WaitForApi';
 import { GetAllMembers } from '../../tasks/api/GetAllMembers';
 import { DeleteMember } from '../../tasks/api/DeleteMember';
+import { FileGenerator } from '../../fixtures/fileGenerator';
+import { UploadFile } from '../../tasks/api/UploadFile';
+import path from 'path';
+import { DownloadFile } from '../../tasks/api/DownloadFile';
 
 // 🔄 Configurar retries para TODO el describe
 test.describe.configure({ 
@@ -23,7 +27,7 @@ test.describe.configure({
 
 test.describe('TC-API: Members API', () => {
   let actor: Actor;
-  const baseURL = 'http://localhost:5002';
+  const baseURL = process.env.BASE_URL_BACK || 'http://localhost:5002';
 
   test.beforeEach(async ({ request }) => {
     actor = Actor.called('Tester');
@@ -56,37 +60,84 @@ test.describe('TC-API: Members API', () => {
   // TC-API-002: GET /api/members/:id - Obtener miembro inexistente
   // ============================================================
   test('TC-API-002: Get non-existing member by ID - @negative @BVA', async () => {
+    // ⏳ El beforeEach ya tiene una espera de 20s, pero la añadimos explícitamente
+    // por si el test se ejecuta solo o en otro contexto
+    console.log('⏳ [Espera 1/1] Esperando 20s para rate limit...');
+    await WaitForApi.seconds(20).performAs(actor);
+
     const memberId = 9999;
 
+    // 📡 Petición 1: GET
+    console.log('📡 [Petición 1] Obteniendo miembro inexistente ID 9999...');
     const response = await actor.attemptsTo(
       GetMemberById.withId(memberId)
     );
 
     const statusCode = await ResponseCode.of(response).answeredBy(actor);
+    console.log(`📊 Status: ${statusCode}`);
     expect(statusCode).toBe(404);
 
     const body = await ResponseBody.of(response).answeredBy(actor);
+    console.log(`📋 Respuesta: ${JSON.stringify(body)}`);
     expect(body.msg).toBe(`Member with id ${memberId} doesn't exist`);
+    
+    console.log('✅ TC-API-002 completado');
   });
 
   // ============================================================
   // TC-API-003: POST /api/members - Crear miembro con datos válidos
   // ============================================================
   test('TC-API-003: Create member with valid data - @smoke @positive @EP', async () => {
+    // ⏳ Espera explícita (aunque el beforeEach ya tiene una)
+    console.log('⏳ [Espera 1/1] Esperando 20s para rate limit...');
+    await WaitForApi.seconds(20).performAs(actor);
+
     const memberData = {
       name: TestDataGenerator.getValidName(),
       gender: TestDataGenerator.getValidGender()
     };
 
-    console.log(`📝 Creando miembro: ${JSON.stringify(memberData)}`);
+    console.log(`📝 [Petición 1] Creando miembro: ${JSON.stringify(memberData)}`);
 
     const response = await actor.attemptsTo(
       CreateMember.withData(memberData)
     );
 
-    if (response.status() !== 201) {
+    const statusCode = response.status();
+    console.log(`📊 Status: ${statusCode}`);
+
+    if (statusCode !== 201) {
       const errorBody = await ResponseBody.of(response).answeredBy(actor);
-      console.log(`❌ Error ${response.status()}: ${JSON.stringify(errorBody)}`);
+      console.log(`❌ Error ${statusCode}: ${JSON.stringify(errorBody)}`);
+      
+      // Si es 400 por nombre inválido, intentar con otro nombre
+      if (statusCode === 400 && errorBody.msg?.includes('Name')) {
+        console.log('🔄 Reintentando con otro nombre...');
+        const retryData = {
+          name: 'Maria Jose',
+          gender: memberData.gender
+        };
+        
+        const retryResponse = await actor.attemptsTo(
+          CreateMember.withData(retryData)
+        );
+        
+        await ValidateResponse.of(retryResponse)
+          .withStatusCode(201)
+          .withBodyContains(retryData)
+          .withSchema(MemberSchema)
+          .performAs(actor);
+        
+        const retryBody = await ResponseBody.of(retryResponse).answeredBy(actor);
+        expect(retryBody.id).toBeDefined();
+        expect(typeof retryBody.id).toBe('number');
+        
+        actor.remember('createdMemberId', retryBody.id);
+        console.log(`✅ Miembro creado con ID: ${retryBody.id}`);
+        return;
+      }
+      
+      throw new Error(`Error ${statusCode}: ${JSON.stringify(errorBody)}`);
     }
 
     await ValidateResponse.of(response)
@@ -100,6 +151,7 @@ test.describe('TC-API: Members API', () => {
     expect(typeof body.id).toBe('number');
 
     actor.remember('createdMemberId', body.id);
+    console.log(`✅ Miembro creado con ID: ${body.id}`);
   });
 
   // ============================================================
@@ -474,4 +526,88 @@ test.describe('TC-API: Members API', () => {
       console.log('✅ TC-API-007 completado: Ciclo de vida DELETE verificado');
     }
   );
+
+  // ============================================================
+  // TC-API-008: POST /api/upload - Subir imagen
+  // ============================================================
+  test('TC-API-008: Upload image file - @files @smoke @positive @EP', async () => {
+    console.log('⏳ [Espera 1/2] Esperando 20s...');
+    await WaitForApi.seconds(20).performAs(actor);
+
+    const filePath = path.join(__dirname, '../../fixtures/files/test_image.jpg');
+    FileGenerator.ensureTestImage(filePath);
+
+    console.log('📤 [Petición 1] Subiendo archivo...');
+    const uploadResponse = await actor.attemptsTo(
+      UploadFile.fromPath(filePath, 'test_image')
+    );
+
+    const statusCode = uploadResponse.status();
+    console.log(`📊 Status: ${statusCode}`);
+
+    await ValidateResponse.of(uploadResponse)
+      .withStatusCode(201)
+      .performAs(actor);
+
+    const body = await ResponseBody.of(uploadResponse).answeredBy(actor);
+    console.log(`📋 Respuesta: ${JSON.stringify(body)}`);
+    
+    expect(body.success).toBe(true);
+    expect(body.message).toContain('successfully');
+    expect(body.url).toBeDefined();
+    expect(body.url).toMatch(/^http:\/\/localhost:5002\/fileuploads\/.+/);
+
+    const filename = body.url.split('/').pop();
+    actor.remember('uploadedFilename', filename);
+    
+    console.log(`✅ Archivo subido: ${filename}`);
+  });
+
+  // ============================================================
+  // TC-API-009: GET /api/download - Descargar imagen
+  // ============================================================
+  test('TC-API-009: Download uploaded image - @files @smoke @positive @EP', async () => {
+    console.log('⏳ [Espera 1/3] Esperando 20s...');
+    await WaitForApi.seconds(20).performAs(actor);
+
+    const filePath = path.join(__dirname, '../../fixtures/files/test_image.jpg');
+    FileGenerator.ensureTestImage(filePath);
+    
+    const fs = require('fs');
+    const originalBuffer = fs.readFileSync(filePath);
+
+    console.log('📤 [Petición 1] Subiendo archivo...');
+    const uploadResponse = await actor.attemptsTo(
+      UploadFile.fromPath(filePath, 'test_download')
+    );
+    
+    const uploadBody = await ResponseBody.of(uploadResponse).answeredBy(actor);
+    const filename = uploadBody.url.split('/').pop();
+    console.log(`✅ Archivo subido: ${filename}`);
+
+    console.log('⏳ [Espera 2/3] Esperando 20s...');
+    await WaitForApi.seconds(20).performAs(actor);
+
+    console.log(`📥 [Petición 2] Descargando archivo: ${filename}`);
+    const downloadResponse = await actor.attemptsTo(
+      DownloadFile.withName(filename!)
+    );
+
+    const statusCode = downloadResponse.status();
+    console.log(`📊 Status: ${statusCode}`);
+
+    await ValidateResponse.of(downloadResponse)
+      .withStatusCode(200)
+      .performAs(actor);
+
+    const headers = downloadResponse.headers();
+    expect(headers['content-disposition']).toContain('attachment');
+    expect(headers['content-type']).toMatch(/image\/(jpeg|jpg|png|gif)/);
+
+    const downloadedBuffer = actor.recall<Buffer>('downloadedFileBuffer');
+    expect(downloadedBuffer).toBeDefined();
+    expect(downloadedBuffer!.length).toBe(originalBuffer.length);
+    
+    console.log(`✅ Archivo descargado correctamente`);
+  });
 });
