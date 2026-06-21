@@ -34,7 +34,6 @@ export class VerifyCart {
     
     console.log(`📋 ${cartRows.length} productos en el carrito`);
 
-    // Extraer información de cada item
     this.actualCartItems = [];
     let totalItems = 0;
     let totalPrice = 0;
@@ -42,11 +41,13 @@ export class VerifyCart {
     for (const row of cartRows) {
       const name = await row.locator('.cart_description h4 a').textContent() || '';
       const quantityText = await row.locator('.cart_quantity button').textContent() || '0';
-      const quantity = parseInt(quantityText);
+      const quantity = parseInt(quantityText.trim());
       const priceText = await row.locator('.cart_price p').textContent() || '0';
       const price = parseFloat(priceText.replace(/[^0-9.]/g, ''));
       const totalText = await row.locator('.cart_total p').textContent() || '0';
       const total = parseFloat(totalText.replace(/[^0-9.]/g, ''));
+
+      console.log(`📦 Producto en carrito: "${name}", Cantidad: ${quantity}, Precio: ${price}, Total: ${total}`);
 
       this.actualCartItems.push({
         name: name.trim(),
@@ -73,11 +74,7 @@ export class VerifyCart {
 
     console.log(`💰 Total general: Rs. ${generalTotal}`);
 
-    // ============================================================
-    // VALIDACIONES
-    // ============================================================
-
-    // ✅ V1: Validar que los nombres coinciden
+    // ✅ V1: Validar nombres
     const expectedNames = this.expectedProducts.map(p => p.name);
     const actualNames = this.actualCartItems.map(item => item.name);
     
@@ -86,7 +83,7 @@ export class VerifyCart {
     console.log(`  Actuales:  ${actualNames.join(', ')}`);
     expect(actualNames.sort()).toEqual(expectedNames.sort());
 
-    // ✅ V2: Validar que las cantidades coinciden
+    // ✅ V2: Validar cantidades
     console.log('\n📝 V2 - Validando cantidades:');
     for (const expected of this.expectedProducts) {
       const actual = this.actualCartItems.find(item => item.name === expected.name);
@@ -94,7 +91,7 @@ export class VerifyCart {
       expect(actual?.quantity).toBe(expected.quantity);
     }
 
-    // ✅ V3: Validar que el total de precios coincide
+    // ✅ V3: Validar total de precios
     let expectedTotal = 0;
     for (const product of this.expectedProducts) {
       expectedTotal += product.price * product.quantity;
@@ -110,7 +107,7 @@ export class VerifyCart {
     console.log(`  Actual:   Rs. ${actualTotal}`);
     expect(actualTotal).toBe(expectedTotal);
 
-    // ✅ V4: Validar que el número total de items coincide
+    // ✅ V4: Validar total de items
     const expectedTotalItems = this.expectedProducts.reduce((sum, p) => sum + p.quantity, 0);
     const actualTotalItems = this.actualCartItems.reduce((sum, item) => sum + item.quantity, 0);
 

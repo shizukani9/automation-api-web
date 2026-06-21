@@ -53,10 +53,11 @@ test.describe('TC-WEB: Flujo de Compra - Automation Exercise', () => {
     );
 
     // 4. Verificar el carrito
-    /*console.log('✅ Verificando carrito...');
+    console.log('✅ Verificando carrito...');
     await actor.attemptsTo(
       VerifyCart.withData(selectedProducts)
-    );*/
+    );
+    
   });
 
   // ============================================================
