@@ -1,25 +1,63 @@
-# 📦 Instalación
-npm install
+# ═══════════════════════════════════════════════════════════
+# 📦 INSTALACIÓN Y CONFIGURACIÓN
+# ═══════════════════════════════════════════════════════════
+
+# Instalar dependencias y navegadores
 npm run setup
 
-# 🚀 Iniciar servidor API (en otra terminal)
-git clone https://github.com/qaboxletstest/demo-api-testing.git
-cd demo-api-testing
-npm install
-npm start
+# Clonar repositorio API e instalar dependencias (PARTE 2)
+npm run setup:api
 
-# 🧪 Ejecutar Tests
-npm run test:api                    # Ejecutar todos los tests de API
-npm run test:positive               # Ejecutar solo tests positivos
-npm run test:negative               # Ejecutar solo tests negativos
-npm run test:smoke                  # Ejecutar solo smoke tests
-npx playwright test -g "TC-API-001" # Ejecutar un test específico
+# Levantar servidor API (en otra terminal)
+npm run start:api
 
-# 📊 Reportes
-npm run report                      # Ver reporte HTML
-npm run report:open                 # Abrir reporte en navegador
-npm run report:json                 # Ver reporte JSON
+# ═══════════════════════════════════════════════════════════
+# 🧪 EJECUCIÓN DE TESTS
+# ═══════════════════════════════════════════════════════════
 
-# 🧹 Limpieza
-npm run clean                       # Limpiar reportes
-npm run clean:all                   # Limpiar todo (incluye node_modules)
+# Ejecutar todos los tests
+npm test
+npm run test:all
+
+# Ejecutar tests WEB (PARTE 1)
+npm run test:web
+
+# Ejecutar tests API (PARTE 2)
+npm run test:api
+
+# Ejecutar con navegador visible
+npm run test:headed
+
+# Ejecutar tests por tags
+npm run test:smoke     # Tests críticos
+npm run test:positive  # Tests positivos
+npm run test:negative  # Tests negativos
+
+# Ejecutar un test específico por nombre
+npx playwright test -g "TC-API-001"
+
+# ═══════════════════════════════════════════════════════════
+# 📊 REPORTES
+# ═══════════════════════════════════════════════════════════
+
+# Ver reporte HTML
+npm run report
+
+# Abrir reporte en navegador
+npm run report:open
+
+# Ver reporte JSON
+npm run report:json
+
+# ═══════════════════════════════════════════════════════════
+# 🧹 LIMPIEZA
+# ═══════════════════════════════════════════════════════════
+
+# Limpiar reportes y evidencias
+npm run clean
+
+# Limpiar todo (incluye node_modules)
+npm run clean:all
+
+# Eliminar repositorio API clonado
+npm run clean:api

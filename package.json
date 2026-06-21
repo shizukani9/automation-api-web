@@ -1,10 +1,12 @@
 {
   "name": "qa-tatiana-mayorga",
   "version": "1.0.0",
-  "description": "",
+  "description": "Reto Técnico QA Semi Senior - Prestamype",
   "main": "index.js",
   "scripts": {
     "setup": "npm install && npx playwright install",
+    "setup:api": "git clone https://github.com/qaboxletstest/demo-api-testing.git && cd demo-api-testing && npm install nodemon",
+    "start:api": "cd demo-api-testing && npm start",
     "test": "playwright test",
     "test:all": "playwright test",
     "test:headed": "playwright test --headed",
@@ -15,17 +17,22 @@
     "test:negative": "playwright test --grep @negative",
     "test:positive": "playwright test --grep @positive",
     "report": "playwright show-report reports/playwright-report",
-    "report:open": "open reports/playwright-report/index.html",
-    "report:json": "cat reports/test-results.json",
-    "clean": "rm -rf reports/playwright-report reports/screenshots reports/videos reports/test-results.json reports/junit.xml playwright-report",
-    "clean:all": "rm -rf reports playwright-report node_modules"
+    "report:open": "open reports/playwright-report/index.html || start reports/playwright-report/index.html || xdg-open reports/playwright-report/index.html",
+    "report:json": "cat reports/test-results.json 2>/dev/null || echo 'No JSON report found'",
+    "clean": "rm -rf reports/playwright-report reports/screenshots reports/videos reports/test-results.json reports/junit.xml playwright-report test-results",
+    "clean:all": "rm -rf reports playwright-report test-results node_modules",
+    "clean:api": "rm -rf demo-api-testing"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/prestamipe-reclutamiento/qa-tatiana-mayorga.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "playwright",
+    "typescript",
+    "screenplay"
+  ],
+  "author": "Tatiana Mayorga Orellana",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
