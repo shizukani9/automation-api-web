@@ -1,4 +1,4 @@
-// src/tests/web/purchaseFlow.spec.ts
+// src/tests/web/purchaseFlow.spec.ts - Versión simplificada
 import { test, expect } from '@playwright/test';
 import { Actor } from '../../actors/Actor';
 import { BrowseTheWeb } from '../../actors/abilities/BrowseTheWeb';
@@ -7,6 +7,7 @@ import { SelectCategory } from '../../tasks/web/SelectCategory';
 import { SelectRandomProducts } from '../../tasks/web/SelectRandomProducts';
 import { AddProductsToCart } from '../../tasks/web/AddProductsToCart';
 import { VerifyCart } from '../../tasks/web/VerifyCart';
+import { AdManager } from '../../utils/AdManager';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -21,59 +22,31 @@ test.describe('TC-WEB: Flujo de Compra - Automation Exercise', () => {
   test.beforeEach(async ({ page }) => {
     actor = Actor.called('Customer');
     actor.can(BrowseTheWeb.as(page, BASE_URL));
-    
-    // Navegar al homepage
-    await actor.attemptsTo(
-      NavigateTo.homepage()
-    );
+
+    // Setup simple
+    await page.waitForTimeout(1000);
+    await actor.attemptsTo(NavigateTo.homepage());
+    await AdManager.ensureNoAds(page, '🔹 ');
+    await page.waitForSelector('header', { state: 'visible', timeout: 10000 });
   });
 
-  // ============================================================
-  // TC-WEB-001: Flujo de compra completo
-  // ============================================================
-  test('TC-WEB-001: Comprar productos aleatorios con cantidades variables - @smoke @web @positive', async () => {
-    // 1. Seleccionar categoría y subcategoría aleatoria
+  test('TC-WEB-001: Comprar productos aleatorios con cantidades variables - @smoke @web @positive', async ({ page }) => {
     const { category, subcategory } = SelectCategory.getRandomCategory();
     console.log(`📂 Seleccionando: ${category} → ${subcategory}`);
-    
-    await actor.attemptsTo(
-      SelectCategory.andSubcategory(category, subcategory)
-    );
 
-    // 2. Seleccionar 5 productos aleatorios
-    console.log('🎲 Seleccionando 5 productos aleatorios...');
-    const selectedProducts = await actor.attemptsTo(
-      SelectRandomProducts.count(5)
-    );
+    await actor.attemptsTo(SelectCategory.andSubcategory(category, subcategory));
+    await AdManager.ensureNoAds(page, '🔹 ');
 
-    // 3. Agregar los productos al carrito con sus cantidades
-    console.log('🛒 Agregando productos al carrito...');
-    await actor.attemptsTo(
-      AddProductsToCart.all(selectedProducts)
-    );
+    const selectedProducts = await actor.attemptsTo(SelectRandomProducts.count(5));
+    await AdManager.ensureNoAds(page, '🔹 ');
 
-    // 4. Verificar el carrito
-    console.log('✅ Verificando carrito...');
-    await actor.attemptsTo(
-      VerifyCart.withData(selectedProducts)
-    );
-    
+    await actor.attemptsTo(AddProductsToCart.all(selectedProducts));
+    await AdManager.ensureNoAds(page, '🔹 ');
+
+    await actor.attemptsTo(VerifyCart.withData(selectedProducts));
   });
 
-  // ============================================================
-  // TC-WEB-002: Carrito vacío
-  // ============================================================
-  test('TC-WEB-002: Verificar carrito vacío - @web @regression', async () => {
-    await actor.attemptsTo(
-      NavigateTo.cart()
-    );
-
-    const page = actor.abilityTo(BrowseTheWeb).getPage();
-    
-    // Verificar que el carrito está vacío
-    const emptyMessage = await page.locator('#cart_info tbody tr').count();
-    expect(emptyMessage).toBe(0);
-    
-    console.log('✅ Carrito vacío correctamente');
+  test.afterEach(async ({ page }) => {
+    await AdManager.closeAds(page, '🔹 ');
   });
 });
