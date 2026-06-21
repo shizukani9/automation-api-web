@@ -1,0 +1,69 @@
+# .github/workflows/web.yml
+name: Web Tests - Chrome
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 8 * * *'  # Ejecutar diariamente a las 8 AM
+  workflow_dispatch:      # Permitir ejecución manual
+
+env:
+  CI: true
+  BASE_URL_FRONT: https://automationexercise.com
+
+jobs:
+  web-tests:
+    name: 🌐 Pruebas Web - Chrome
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🎭 Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: 🧪 Run Web Tests
+        run: npm run test:web
+
+      - name: 📊 Upload HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-report
+          path: reports/playwright-report/
+
+      - name: 📸 Upload Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-screenshots
+          path: reports/screenshots/
+
+      - name: 🎥 Upload Videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-videos
+          path: reports/videos/
+
+      - name: 📄 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-results
+          path: |
+            reports/test-results.json
+            reports/junit.xml

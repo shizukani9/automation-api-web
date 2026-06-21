@@ -1,77 +1,77 @@
-# .github/workflows/web-tests.yml
-name: Web Tests - Chrome
+# .github/workflows/api.yml
+name: API Tests - Chrome
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ develop ]
+    branches: [ main, develop ]
   schedule:
-    - cron: '0 8 * * *'  # Ejecutar diariamente a las 8 AM
-  workflow_dispatch:      # Permitir ejecución manual
+    - cron: '30 8 * * *'  # Ejecutar diariamente a las 8:30 AM
+  workflow_dispatch:        # Permitir ejecución manual
 
 env:
-  CI: true  # 👈 Activa headless automáticamente
+  CI: true
+  BASE_URL_BACK: http://localhost:5002
 
 jobs:
-  web-tests:
-    name: 🌐 Pruebas Web - Chrome
+  api-tests:
+    name: 🔌 Pruebas API - Chrome
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Checkout del código
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      # 2. Configurar Node.js
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
 
-      # 3. Instalar dependencias
       - name: 📦 Install dependencies
         run: npm ci
 
-      # 4. Instalar Playwright (solo Chrome)
-      - name: 🎭 Install Playwright browsers
+      - name: 🎭 Install Playwright
         run: npx playwright install --with-deps chromium
 
-      # 5. Ejecutar pruebas web
-      - name: 🧪 Run Web Tests
-        run: npm run test:web
+      - name: 🚀 Start API Server
+        run: |
+          git clone https://github.com/shizukani9/demo-api-testing-tatiana.git
+          cd demo-api-testing-tatiana
+          npm install
+          npm start &
+          sleep 15
 
-      # 6. Subir reporte HTML
+      - name: 🧪 Run API Tests
+        run: npm run test:api
+
       - name: 📊 Upload HTML Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: web-report
+          name: api-report
           path: reports/playwright-report/
 
-      # 7. Subir screenshots
       - name: 📸 Upload Screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: web-screenshots
+          name: api-screenshots
           path: reports/screenshots/
 
-      # 8. Subir videos
       - name: 🎥 Upload Videos
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: web-videos
+          name: api-videos
           path: reports/videos/
 
-      # 9. Subir resultados JSON
       - name: 📄 Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: web-results
+          name: api-results
           path: |
             reports/test-results.json
             reports/junit.xml
