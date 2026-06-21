@@ -1,0 +1,77 @@
+# .github/workflows/api.yml
+name: API Tests - Chrome
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+  schedule:
+    - cron: '30 8 * * *'  # Ejecutar diariamente a las 8:30 AM
+  workflow_dispatch:        # Permitir ejecución manual
+
+env:
+  CI: true
+  BASE_URL_BACK: http://localhost:5002
+
+jobs:
+  api-tests:
+    name: 🔌 Pruebas API - Chrome
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🎭 Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: 🚀 Start API Server
+        run: |
+          git clone https://github.com/shizukani9/demo-api-testing-tatiana.git
+          cd demo-api-testing-tatiana
+          npm install
+          npm start &
+          sleep 15
+
+      - name: 🧪 Run API Tests
+        run: npm run test:api
+
+      - name: 📊 Upload HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-report
+          path: reports/playwright-report/
+
+      - name: 📸 Upload Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-screenshots
+          path: reports/screenshots/
+
+      - name: 🎥 Upload Videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-videos
+          path: reports/videos/
+
+      - name: 📄 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-results
+          path: |
+            reports/test-results.json
+            reports/junit.xml

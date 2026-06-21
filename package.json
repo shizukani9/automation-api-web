@@ -1,0 +1,60 @@
+{
+  "name": "qa-tatiana-mayorga",
+  "version": "1.0.0",
+  "description": "Reto Técnico QA Semi Senior - Prestamype",
+  "main": "index.js",
+  "scripts": {
+    "setup": "npm install && npx playwright install",
+    "setup:api": "git clone https://github.com/qaboxletstest/demo-api-testing.git && cd demo-api-testing && npm install nodemon",
+    "start:api": "cd demo-api-testing && npm start",
+    "test": "playwright test",
+    "test:all": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:web": "playwright test src/tests/web",
+    "test:api": "playwright test src/tests/api",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:negative": "playwright test --grep @negative",
+    "test:positive": "playwright test --grep @positive",
+    "report": "playwright show-report reports/playwright-report",
+    "report:open": "open reports/playwright-report/index.html || start reports/playwright-report/index.html || xdg-open reports/playwright-report/index.html",
+    "report:json": "cat reports/test-results.json 2>/dev/null || echo 'No JSON report found'",
+    "clean": "rm -rf reports/playwright-report reports/screenshots reports/videos reports/test-results.json reports/junit.xml playwright-report test-results",
+    "clean:all": "rm -rf reports playwright-report test-results node_modules",
+    "clean:api": "rm -rf demo-api-testing"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prestamipe-reclutamiento/qa-tatiana-mayorga.git"
+  },
+  "keywords": [
+    "playwright",
+    "typescript",
+    "screenplay"
+  ],
+  "author": "Tatiana Mayorga Orellana",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/prestamipe-reclutamiento/qa-tatiana-mayorga/issues"
+  },
+  "homepage": "https://github.com/prestamipe-reclutamiento/qa-tatiana-mayorga#readme",
+  "devDependencies": {
+    "@cucumber/cucumber": "^13.0.0",
+    "@playwright/test": "^1.61.0",
+    "@types/node": "^25.9.4",
+    "@typescript-eslint/eslint-plugin": "^8.61.1",
+    "@typescript-eslint/parser": "^8.61.1",
+    "dotenv": "^17.4.2",
+    "eslint": "^10.5.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-playwright": "^2.10.4",
+    "prettier": "^3.8.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "mime": "^4.1.0"
+  }
+}
