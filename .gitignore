@@ -192,3 +192,4 @@ node_modules
 playwright-report/
 test-results/
 *.log
+demo-api-testing-tatiana/
