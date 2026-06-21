@@ -3,9 +3,9 @@ name: Web Tests - Chrome
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ develop ]
   schedule:
     - cron: '0 8 * * *'  # Ejecutar diariamente a las 8 AM
   workflow_dispatch:      # Permitir ejecución manual

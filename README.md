@@ -15,10 +15,6 @@ npm run start:api
 # 🧪 EJECUCIÓN DE TESTS
 # ═══════════════════════════════════════════════════════════
 
-# Ejecutar todos los tests
-npm test
-npm run test:all
-
 # Ejecutar tests WEB (PARTE 1)
 npm run test:web
 
